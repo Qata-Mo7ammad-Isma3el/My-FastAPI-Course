@@ -1,0 +1,44 @@
+#### python individual files or scripts 
+1) pip install uv -> on the global python 
+2) uv python list -> to list all python versions that iv installed 
+3) uv python install 3.8 -> to install python faster then ever 
+4) uv python uninstall 3.8 -> to uninstall python faster then ever 
+5) uv python find 3.8 -> it will find that particular python version 
+6) uv run main.py -> to run a python script
+7) uv run --python 3.9.21 main.py -> to run a python script with specific python version 
+8) uv run --python --with rich 3.9.21 main.py -> to run a python script with specific python version with rich as dependencies 
+   uv run --python --with rich --with request 3.9.21 main.py
+9) uv init --script test.py --python 3.9.21 -> this will initialize a uv run with the right dependencies
+    # /// script
+    # requires-python = ">=3.11"
+    # dependencies = []
+    # ///
+10) uv add --script test.py "rich"
+
+### python projects 
+
+1) uv init -> this will initialize every thing you need  
+   uv init my-directory -> this will initialize every thing you need inside my-directory
+2) uv add pandas -> this will add pandas and create virtual environment...
+
+3) uv run main.py -> this will run the main and install all required dependencies
+4) uv sync -> to sync the uv with the virtual environment 
+5) uv remove pandas -> to remove 
+
+
+#-------------------------------------------------------------------------------------
+command: uv self version
+### to create new project 
+1) mkdir my_project
+2) cd my_project
+3) uv init -> Initialize a uv project
+4) uv venv .venv -> Create a virtual environment
+5) .\.venv\Scripts\activate-> activate the virtual environment
+6) uv add fastapi uvicorn python-dotenv -> Add dependencies
+7) uv run fastapi dev main.py-> Run your app
+### Migrate an Existing pip + venv Project to uv
+1) Remove old venv
+2) uv init
+3) uv venv -> Re-create virtual env using uv
+4) uv add --requirements requirements.txt
+5) .\.venv\Scripts\activate
