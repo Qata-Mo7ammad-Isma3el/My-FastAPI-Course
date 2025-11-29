@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List
-from uuid import UUID
+from uuid import UUID, uuid4
 from datetime import datetime, date
 from sqlmodel import SQLModel, Field # Assuming SQLModel is used for the DB model
 
@@ -17,7 +17,7 @@ class BookBase(BaseModel):
 # If this class is your SQLModel table (contains all DB fields):
 class Book(BookBase, SQLModel, table=True):
     # Primary Key/Unique ID (DB-generated)
-    uid: Optional[UUID] = Field(default=None, primary_key=True)
+    uid: UUID = Field(default_factory=uuid4, primary_key=True)
     
     # Timestamps (DB-generated, optional on creation)
     created_at: Optional[datetime] = Field(default_factory=datetime.now)

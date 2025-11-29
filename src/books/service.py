@@ -13,7 +13,6 @@ class BookService:
         statement = select(Book).order_by(desc(Book.created_at))
         results = await session.exec(statement)
         return results.all()
-    
     #> ... get_book (No change, but added Optional return hint)
     async def get_book(self, book_uid:UUID, session: AsyncSession) -> Optional[Book]:
         statement = select(Book).where(Book.uid == book_uid)
@@ -21,15 +20,15 @@ class BookService:
         book = results.first()
         return book # Returns Book or None
     
-    #> ... create_book (Improved refresh call)
-    async def create_book(self, book_data:BookCreateModel, session: AsyncSession) -> Book:
+    # #> ... create_book (Improved refresh call)
+    async def create_book(self, book_data: BookCreateModel, session: AsyncSession) -> Book:
         book_data_dict = book_data.model_dump()
-        #// new_book = Book.model_validate(book_data_dict)
-        new_book = Book(**book_data_dict)
-        new_book.published_date = datetime.strptime(str(book_data.published_date), "%Y-%m-%d").date()
-        session.add(new_book) #> you dont have to use await with this because it's done in python memory 
+        new_book = Book.model_validate(book_data_dict)
+        #// if isinstance(book_data.published_date, str):
+        #//     new_book.published_date = datetime.strptime(book_data.published_date, "%Y-%m-%d").date()
+        session.add(new_book) #> you dont have to use await with this because it's done in python memory
         await session.commit()
-        await session.refresh(new_book) # <--- Added object to refresh
+        await session.refresh(new_book)
         return new_book
     
     #> ... update_book (CRITICAL fixes: await, items(), commit/refresh loop)
@@ -48,7 +47,6 @@ class BookService:
             await session.refresh(book_to_update)
             return book_to_update
         return None
-
     #> ... delete_book (CRITICAL fix: await, and removed unnecessary refresh)
     async def delete_book(self, book_uid:UUID, session: AsyncSession) -> Optional[Book]:
         book_to_delete = await self.get_book(book_uid, session=session) #! <--- ADDED AWAIT

@@ -28,3 +28,35 @@
 #> | context          | dict      | None    | Pass extra data: Provides a dict of values accessible inside custom validators for conditional logic.                              |
 #> | from_attributes  | bool      | False   | Validate from objects: Allows reading values from object attributes (e.g., ORM objects), not only dictionary keys.                 |
 #> +------------------+-----------+---------+------------------------------------------------------------------------------------------------------------------------------------+
+
+#!   alembic commands
+## uv run alembic init -t async migrations
+#! to commit migrations
+## uv run alembic --config src/alembic.ini revision --autogenerate -m "Initial migration"
+#! to apply migrations
+## uv run alembic --config src/alembic.ini upgrade head
+#! to rollback last migration
+## uv run alembic --config src/alembic.ini downgrade -1
+#> +------------------------+-----------------------------------------------+-----------------------------------------------+
+#> | MIGRATION STEP         | COMMAND                                       | DESCRIPTION                                   |
+#> +------------------------+-----------------------------------------------+-----------------------------------------------+
+#> | Install Alembic        | uv add alembic                                | Add Alembic to your FastAPI project.          |
+#> +------------------------+-----------------------------------------------+-----------------------------------------------+
+#> | Initialize Alembic     | alembic init migrations                        | Creates migrations folder + config files.    |
+#> +------------------------+-----------------------------------------------+-----------------------------------------------+
+#> | Set DB URL             | edit alembic.ini                              | Add your database connection string.          |
+#> +------------------------+-----------------------------------------------+-----------------------------------------------+
+#> | Link Models Metadata   | edit migrations/env.py                        | Import Base/SQLModel metadata for Alembic.    |
+#> +------------------------+-----------------------------------------------+-----------------------------------------------+
+#> | Autogenerate Migration | alembic revision --autogenerate -m "message"  | Creates migration based on model changes.     |
+#> +------------------------+-----------------------------------------------+-----------------------------------------------+
+#> | Apply Migration        | alembic upgrade head                          | Updates DB schema to the latest version.      |
+#> +------------------------+-----------------------------------------------+-----------------------------------------------+
+#> | Rollback Migration     | alembic downgrade -1                          | Undo the most recent migration.               |
+#> +------------------------+-----------------------------------------------+-----------------------------------------------+
+#> | View History           | alembic history                               | Shows previous and pending migrations.        |
+#> +------------------------+-----------------------------------------------+-----------------------------------------------+
+#> | Stamp DB State         | alembic stamp head                            | Mark the DB as up-to-date without running.    |
+#> +------------------------+-----------------------------------------------+-----------------------------------------------+
+#> | Manual Revision        | alembic revision -m "message"                 | Creates an empty migration file manually.     |
+#> +------------------------+-----------------------------------------------+-----------------------------------------------+
