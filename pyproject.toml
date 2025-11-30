@@ -12,5 +12,7 @@ dependencies = [
     "fastapi[standard]>=0.122.0",
     "passlib>=1.7.4",
     "pydantic-settings>=2.12.0",
+    "pyjwt>=2.10.1",
+    "redis>=7.1.0",
     "sqlmodel>=0.0.27",
 ]

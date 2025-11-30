@@ -51,7 +51,7 @@ class BookResponse(BaseModel):
     updated_at: datetime
 
     class Config:
-        orm_mode = True          # let Pydantic read SQLAlchemy objects
+        from_attributes  = True          # let Pydantic read SQLAlchemy objects
 
 class BookUpdateResponseModel(BaseModel):
     message: str

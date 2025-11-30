@@ -22,6 +22,7 @@ class UserModel(BaseModel):
     password_hash: str = Field(exclude=True)
     created_at: datetime
     updated_at: datetime
-    model_config = {
-        "from_attributes": True,  
-    }
+
+class UserLoginModel(BaseModel):
+    email: EmailStr = Field(..., max_length=40, description="User's email address")
+    password: str = Field(..., min_length=6, max_length=100)

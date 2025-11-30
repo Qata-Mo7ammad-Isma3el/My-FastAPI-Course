@@ -20,7 +20,7 @@ app = FastAPI(
     version=version,
     title="Book Management API",
     description="An API to manage books using FastAPI routers",
-    lifespan=lifespan
+    #//lifespan=lifespan
 )
 
 app.include_router(book_router,prefix=f"/api/{version}/books",tags=["Books"]) 

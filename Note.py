@@ -60,3 +60,27 @@
 #> +------------------------+-----------------------------------------------+-----------------------------------------------+
 #> | Manual Revision        | alembic revision -m "message"                 | Creates an empty migration file manually.     |
 #> +------------------------+-----------------------------------------------+-----------------------------------------------+
+
+#! JWT secret key in .env file
+import secrets
+print(secrets.token_hex(16))
+
+
+
+#!-------------- Role Based Access Control (RBAC) --------------!#
+## admin 
+[
+    "adding users",
+    "change user roles",
+    "crud on users",
+    'book submissions',
+    "crud on reviews",
+    "revoking access tokens",
+]
+
+##  users
+[
+    "crud on their own book submissions",
+    "crud on their own reviews",
+    "crud on their own accounts",
+]
