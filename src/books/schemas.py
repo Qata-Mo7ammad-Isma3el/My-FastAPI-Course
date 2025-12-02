@@ -5,6 +5,7 @@ from datetime import datetime, date
 from typing import List
 
 from src.reviews.schemas import ReviewModel
+from src.tags.schemas import TagModel
 
 # --- 1. Base Schema Model ---
 class BookBase(BaseModel):
@@ -64,3 +65,5 @@ class BookDeleteResponseModel(BaseModel):
 
 class BookDetailModel(Book):
     reviews: List[ReviewModel]
+    tags: List[TagModel]
+
