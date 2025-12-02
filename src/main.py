@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from src.books.routes import book_router
 from src.auth.routes import auth_router
+from src.reviews.routes import Reviews_router
 from contextlib import asynccontextmanager
 from src.db.main import init_db
 
@@ -20,8 +21,9 @@ app = FastAPI(
     version=version,
     title="Book Management API",
     description="An API to manage books using FastAPI routers",
-    #//lifespan=lifespan
+    lifespan=lifespan
 )
 
 app.include_router(book_router,prefix=f"/api/{version}/books",tags=["Books"]) 
 app.include_router(auth_router,prefix=f"/api/{version}/auth",tags=["Authentication"])
+app.include_router(Reviews_router,prefix=f"/api/{version}/reviews",tags=["Reviews"])

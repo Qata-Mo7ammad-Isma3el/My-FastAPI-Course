@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.responses import JSONResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 from typing import Annotated
-from src.auth.schemas import UserCreateModel, UserModel, UserLoginModel
-from src.auth.service import user_service
+from src.auth.schemas import UserCreateModel, UserModel, UserLoginModel, UserBooksModel
+from src.auth.service import UserService
 from src.db.main import get_session
 from src.auth.utils import create_access_token, decode_token, verify_password
 from datetime import timedelta
@@ -18,7 +18,7 @@ from src.db.redis import add_jti_to_BlockList
 from datetime import datetime
 
 auth_router = APIRouter()
-User_Service = user_service()
+user_service = UserService()
 role_checker = RoleChecker(allowed_roles=["admin", "user"])
 
 
@@ -29,14 +29,14 @@ async def create_user_account(
     user_data: UserCreateModel, session: Annotated[AsyncSession, Depends(get_session)]
 ):
     email = user_data.email
-    user_exists = await User_Service.user_exists(email, session)
+    user_exists = await user_service.user_exists(email, session)
 
     if user_exists:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"User with this email '({email})' already exists.",
         )
-    new_user = await User_Service.create_user(user_data, session)
+    new_user = await user_service.create_user(user_data, session)
     return new_user
 
 
@@ -47,7 +47,7 @@ async def login_user(
 
     email = login_data.email
     password = login_data.password
-    user = await User_Service.get_user_by_email(email, session)
+    user = await user_service.get_user_by_email(email, session)
     if user is not None:
         password_valid = verify_password(password, user.password_hash)
         if password_valid:
@@ -110,12 +110,12 @@ async def get_new_access_token(
     )
 
 
-@auth_router.get("/me")
+@auth_router.get("/me", response_model=UserBooksModel)
 async def get_logged_in_user(
     current_user: Annotated[dict, Depends(get_current_user)],
     _: bool = Depends(role_checker),
 ):
-    return current_user
+    return current_user  # TODO try to add uid in a good looking way
 
 
 @auth_router.post("/logout")

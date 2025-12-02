@@ -6,10 +6,10 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from src.auth.utils import decode_token
 from src.db.redis import token_in_BlockList
 from src.db.main import get_session
-from src.auth.models import User
-from src.auth.service import user_service
+from src.db.models import User
+from src.auth.service import UserService
 
-User_Service = user_service()
+user_service = UserService()
 
 class TokenBearer(HTTPBearer):
     def __init__(self, auto_error: bool = True):
@@ -66,7 +66,7 @@ async def get_current_user(
     token_data:Annotated[dict , Depends(AccessTokenBearer())],
 ):
     user_email = token_data['user']['email']
-    user = await User_Service.get_user_by_email(user_email, session)
+    user = await user_service.get_user_by_email(user_email, session)
     
     if not user_email:
         raise HTTPException(
