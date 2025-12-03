@@ -2,21 +2,27 @@
 #! any async function you have to call it using await thats not optional
 #! every thing starts with async must be used with await
 from sqlmodel.ext.asyncio.session import AsyncSession
-from .schemas import BookCreateModel, BookUpdateModel
-from sqlmodel import select, desc
+from src.books.schemas import BookCreateModel, BookUpdateModel, BookSearchModel
+from sqlmodel import select, desc, func
+from sqlalchemy.orm import selectinload
 from src.db.models import Book
-from typing import Optional  # Recommended for better type hinting
+from typing import Optional, List  # Recommended for better type hinting
 from datetime import datetime
 from uuid import UUID
+from src.errors import BookNotFound, InsufficientPermission
 
 
 class BookService:
-    async def get_all_books(self, session: AsyncSession) -> list[Book]:
-        statement = select(Book).order_by(desc(Book.created_at))
+    async def get_all_books(
+        self, session: AsyncSession, skip: int = 0, limit: int = 100
+    ) -> List[Book]:
+        statement = (
+            select(Book).order_by(desc(Book.created_at)).offset(skip).limit(limit)
+        )
         results = await session.exec(statement)
         return results.all()
 
-    async def get_user_books(self, user_uid: UUID, session: AsyncSession) -> list[Book]:
+    async def get_user_books(self, user_uid: UUID, session: AsyncSession) -> List[Book]:
         statement = (
             select(Book)
             .where(Book.user_uid == user_uid)
@@ -26,9 +32,15 @@ class BookService:
         return results.all()
 
     async def get_book(self, book_uid: UUID, session: AsyncSession) -> Optional[Book]:
-        statement = select(Book).where(Book.uid == book_uid)
+        statement = (
+            select(Book)
+            .where(Book.uid == book_uid)
+            .options(selectinload(Book.reviews), selectinload(Book.tags))
+        )
         results = await session.exec(statement)
         book = results.first()
+        if not book:
+            raise BookNotFound()
         return book  # Returns Book or None
 
     async def create_book(
@@ -45,33 +57,56 @@ class BookService:
         return new_book
 
     async def update_book(
-        self, book_uid: UUID, update_data: BookUpdateModel, session: AsyncSession
-    ) -> Optional[Book]:
+        self,
+        book_uid: UUID,
+        user_uid: UUID,
+        update_data: BookUpdateModel,
+        session: AsyncSession,
+    ) -> Book:
         book_to_update = await self.get_book(book_uid, session=session)
+
         if book_to_update is not None:
             #! Use exclude_unset=True to only update provided fields
             book_update_dict = update_data.model_dump(exclude_unset=True)
-
+            if book_to_update.user_uid != user_uid:
+                raise InsufficientPermission()
             for k, v in book_update_dict.items():
                 setattr(book_to_update, k, v)
-
-            # > Commit and refresh MUST be outside the loop
-            # > and refresh should be on the object
             await session.commit()
             await session.refresh(book_to_update)
             return book_to_update
         return None
 
     # > ... delete_book (CRITICAL fix: await, and removed unnecessary refresh)
-    async def delete_book(
-        self, book_uid: UUID, session: AsyncSession
-    ) -> Optional[Book]:
-        book_to_delete = await self.get_book(
-            book_uid, session=session
-        )  #! <--- ADDED AWAIT
-        if book_to_delete is not None:
-            await session.delete(book_to_delete)
-            await session.commit()
-            # // Removed unnecessary await session.refresh()
-            return book_to_delete  # > Typically returns the deleted object or a status
-        return None
+    async def delete_book(self, book_uid: UUID, session: AsyncSession) -> Book:
+        book_to_delete = await self.get_book(book_uid, session=session)
+        await session.delete(book_to_delete)
+        await session.commit()
+        # // Removed unnecessary await session.refresh()
+        return book_to_delete
+
+    async def search_books(
+        self,
+        session: AsyncSession,
+        search_params: BookSearchModel,
+        skip: int = 0,
+        limit: int = 100,
+    ) -> List[Book]:
+        statement = select(Book)
+
+        if search_params.title:
+            statement = statement.where(
+                func.lower(Book.title).ilike(f"%{search_params.title}%")
+            )
+        if search_params.author:
+            statement = statement.where(
+                func.lower(Book.title).ilike(f"%{search_params.author}%")
+            )
+        if search_params.publisher:
+            statement = statement.where(
+                func.lower(Book.title).ilike(f"%{search_params.publisher}%")
+            )
+
+        statement = statement.order_by(desc(Book.created_at)).offset(skip).limit(limit)
+        results = await session.exec(statement)
+        return results.all()

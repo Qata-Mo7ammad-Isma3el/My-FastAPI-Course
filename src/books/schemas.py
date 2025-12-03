@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator 
 from typing import Optional
 from uuid import UUID
 from datetime import datetime, date
@@ -19,13 +19,24 @@ class BookBase(BaseModel):
 # --- 2. Book Schemas ---
 class Book(BookBase):
     uid: UUID
+    user_uid: UUID
     created_at: datetime
     updated_at: datetime
 
 
 # --- 3. Request Models ---
 class BookCreateModel(BookBase):
-    pass  # inherits all fields
+    @field_validator('page_count')
+    def page_count_positive(cls, v):
+        if v <= 0:
+            raise ValueError('page_count must be positive')
+        return v
+    
+    @field_validator('published_date')
+    def published_date_not_future(cls, v):
+        if v > date.today():
+            raise ValueError('published_date cannot be in the future')
+        return v
 
 
 class BookUpdateModel(BaseModel):
@@ -36,9 +47,20 @@ class BookUpdateModel(BaseModel):
     page_count: Optional[int] = None
     language: Optional[str] = None
 
+class BookSearchModel(BaseModel):
+    title: Optional[str] = None
+    author: Optional[str] = None
+    publisher: Optional[str] = None
+
+## --- 4. Detailed Book Model for Relationships ---
+class BookDetailModel(Book):
+    reviews: List[ReviewModel] = []
+    tags: List[TagModel] = []
+
 ## --- 5. Response Models ---
 class BookResponse(BaseModel):
     uid: UUID
+    user_uid: UUID
     title: str
     author: str
     publisher: str
@@ -63,7 +85,5 @@ class BookDeleteResponseModel(BaseModel):
     deleted_book: BookResponse
 
 
-class BookDetailModel(Book):
-    reviews: List[ReviewModel]
-    tags: List[TagModel]
+
 

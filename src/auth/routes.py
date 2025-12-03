@@ -16,7 +16,15 @@ from src.auth.dependencies import (
 )
 from src.db.redis import add_jti_to_BlockList
 from datetime import datetime
+from src.errors import UserAlreadyExists, UserNotFound, InvalidCredentials, InvalidToken
 
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+
+
+
+
+limiter = Limiter(key_func=get_remote_address)
 auth_router = APIRouter()
 user_service = UserService()
 role_checker = RoleChecker(allowed_roles=["admin", "user"])
@@ -32,15 +40,13 @@ async def create_user_account(
     user_exists = await user_service.user_exists(email, session)
 
     if user_exists:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"User with this email '({email})' already exists.",
-        )
+        raise UserAlreadyExists()
     new_user = await user_service.create_user(user_data, session)
     return new_user
 
 
 @auth_router.post("/login")
+@limiter.limit("5/minute") ## ch8 QATA 
 async def login_user(
     login_data: UserLoginModel, session: Annotated[AsyncSession, Depends(get_session)]
 ):
@@ -62,6 +68,7 @@ async def login_user(
                 user_data={
                     "uid": str(user.uid),
                     "email": user.email,
+                    "role": user.role, ## ch3QATA
                 },
                 expiry=timedelta(days=settings.REFRESH_TOKEN_EXPIRY),
                 refresh=True,
@@ -79,10 +86,7 @@ async def login_user(
                     "token_type": "bearer",
                 },
             )
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid email or password.",
-    )
+    raise InvalidCredentials()
 
 
 @auth_router.get("/refresh_token")
@@ -92,10 +96,7 @@ async def get_new_access_token(
     expiry_timestamp = token_details.get("exp")
     if datetime.fromtimestamp(expiry_timestamp) > datetime.now():
         new_access_token = create_access_token(
-            user_data={
-                "uid": token_details.get("uid"),
-                "email": token_details.get("email"),
-            },
+            user_data=token_details["user"], ## ch2QATA
         )
         return JSONResponse(
             status_code=status.HTTP_200_OK,
@@ -104,10 +105,7 @@ async def get_new_access_token(
                 "token_type": "bearer",
             },
         )
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Refresh token has expired. Please log in again.",
-    )
+    raise InvalidToken()
 
 
 @auth_router.get("/me", response_model=UserBooksModel)
@@ -121,8 +119,27 @@ async def get_logged_in_user(
 @auth_router.post("/logout")
 async def revoke_token(token_details: Annotated[dict, Depends(AccessTokenBearer())]):
     jti = token_details.get("jti")
-    await add_jti_to_BlockList(jti)
+    ## ch4QATA
+    exp = token_details.get("exp")
+    # Calculate remaining time until expiry 
+    remaining_ttl = exp - int(datetime.now().timestamp())
+    if remaining_ttl > 0:
+        await add_jti_to_BlockList(jti)
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content={"message": "Token has been revoked successfully."},
     )
+
+
+
+## TODO ch6 QATA
+@auth_router.post("/forgot-password")
+async def forgot_password(email: str, session: AsyncSession = Depends(get_session)):
+    # Generate reset token, send email, etc.
+    pass
+
+@auth_router.post("/reset-password")
+async def reset_password(token: str, new_password: str, session: AsyncSession = Depends(get_session)):
+    # Validate reset token, update password
+    pass
+

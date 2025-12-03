@@ -84,3 +84,11 @@ print(secrets.token_hex(16))
     "crud on their own reviews",
     "crud on their own accounts",
 ]
+
+#! Dependencies Types: 
+#> 1) Function Dependency
+#> 2) Class Dependency
+#> 3) Sub-dependencies
+
+
+

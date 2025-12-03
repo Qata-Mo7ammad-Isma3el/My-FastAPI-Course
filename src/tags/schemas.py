@@ -4,7 +4,6 @@ from typing import List
 
 from pydantic import BaseModel
 
-
 class TagModel(BaseModel):
     uid: UUID
     name: str

@@ -26,9 +26,15 @@ from src.db.models import User, Book
 
 DATABASE_URL = settings.DATABASE_URL
 
+# main.py
 engine = create_async_engine(
     DATABASE_URL,
-    echo=True,
+    echo=settings.DEBUG,  # Only echo in debug mode
+    pool_size=20,  # Number of connections to keep open
+    max_overflow=10,  # Allow up to 10 connections beyond pool_size
+    pool_pre_ping=True,  # Verify connections before using
+    pool_recycle=3600,  # Recycle connections every hour
+    pool_timeout=30,  # Wait up to 30 seconds for a connection
 )
 
 SessionLocal = async_sessionmaker(
@@ -47,3 +53,24 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
+
+async def check_db_health() -> dict:
+    """Check database connection health"""
+    try:
+        async with engine.begin() as conn:
+            # Simple query to test connection
+            result = await conn.execute("SELECT 1")
+            return {
+                "status": "healthy",
+                "database": engine.url.database,
+                "pool_status": {
+                    "checked_out": engine.pool.checkedout(),
+                    "connections": engine.pool.size(),
+                }
+            }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "database": engine.url.database if hasattr(engine, 'url') else "unknown"
+        }

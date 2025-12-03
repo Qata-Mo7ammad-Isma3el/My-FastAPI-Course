@@ -8,8 +8,15 @@ from src.db.redis import token_in_BlockList
 from src.db.main import get_session
 from src.db.models import User
 from src.auth.service import UserService
+from src.errors import (
+    InvalidToken,
+    RefreshTokenRequired,
+    AccessTokenRequired,
+    InsufficientPermission,
+)
 
 user_service = UserService()
+
 
 class TokenBearer(HTTPBearer):
     def __init__(self, auto_error: bool = True):
@@ -24,20 +31,18 @@ class TokenBearer(HTTPBearer):
         token = cred.credentials
         token_data = decode_token(token)
         if not self.token_valid(token):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Invalid or expired token.",
-            )
+            raise InvalidToken()
         if await token_in_BlockList(token_data["jti"]):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Token has been revoked. Please login again.",
-            )
+            raise InvalidToken()
         self.verify_token_data(token_data)
         return token_data
-
+    ## ch1QATA
     def token_valid(self, token: str) -> bool:
-        return True if decode_token(token) is not None else False
+        try:
+            decode_token(token)
+            return True
+        except Exception:
+            return False
 
     def verify_token_data(self, token_data: dict) -> None:
         raise NotImplementedError("please override this method in subclass!!")
@@ -46,38 +51,31 @@ class TokenBearer(HTTPBearer):
 class AccessTokenBearer(TokenBearer):
     def verify_token_data(self, token_data: dict) -> None:
         if token_data and token_data["refresh"]:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="please provide a valid access token.",
-            )
+            raise AccessTokenRequired()
 
 
 class RefreshTokenBearer(TokenBearer):
     def verify_token_data(self, token_data: dict) -> None:
         if token_data and not token_data["refresh"]:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Refresh token cannot be used as access token. please provide a valid access Refresh token.",
-            )
+            raise RefreshTokenRequired()
 
 
 async def get_current_user(
     session: Annotated[AsyncSession, Depends(get_session)],
-    token_data:Annotated[dict , Depends(AccessTokenBearer())],
+    token_data: Annotated[dict, Depends(AccessTokenBearer())],
 ):
-    user_email = token_data['user']['email']
+    user_email = token_data["user"]["email"]
     user = await user_service.get_user_by_email(user_email, session)
-    
+
     if not user_email:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token or missing email"
+            detail="Invalid token or missing email",
         )
-    
+
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     return user
 
@@ -91,8 +89,5 @@ class RoleChecker:
         current_user: Annotated[User, Depends(get_current_user)],
     ):
         if current_user.role not in self.allowed_roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You do not have the necessary permissions to access this resource.",
-            )
-        return True
+            raise InsufficientPermission()
+        return True 
