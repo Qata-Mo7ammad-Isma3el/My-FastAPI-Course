@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     
     # Application
     DEBUG: bool = Field(default=False)
-    ENVIRONMENT: str = Field(default="development", regex="^(development|staging|production)$")
+    ENVIRONMENT: str = Field(default="development", pattern="^(development|staging|production)$")
     
     # API
     API_PREFIX: str = Field(default="/api/v1")

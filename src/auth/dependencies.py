@@ -4,7 +4,7 @@ from typing import Union, Annotated, List
 from fastapi.security.http import HTTPAuthorizationCredentials
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.auth.utils import decode_token
-from src.db.redis import token_in_BlockList
+from src.db.redis import RedisClient, get_redis
 from src.db.main import get_session
 from src.db.models import User
 from src.auth.service import UserService
@@ -23,25 +23,31 @@ class TokenBearer(HTTPBearer):
         super().__init__(auto_error=auto_error)
 
     async def __call__(
-        self, request: Request
+        self, request: Request, redis_client: Annotated[RedisClient, Depends(get_redis)]
     ) -> Union[HTTPAuthorizationCredentials, None]:
         cred = await super().__call__(request)
         # print(cred.scheme) #> Bearer
         # print(cred.credentials) #> actual token
         token = cred.credentials
-        token_data = decode_token(token)
+
         if not self.token_valid(token):
             raise InvalidToken()
-        if await token_in_BlockList(token_data["jti"]):
+
+        token_data = decode_token(token)
+
+        if await redis_client.token_in_BlockList(token_data["jti"]):
             raise InvalidToken()
+
         self.verify_token_data(token_data)
         return token_data
+
     ## ch1QATA
     def token_valid(self, token: str) -> bool:
         try:
             decode_token(token)
             return True
-        except Exception:
+        except Exception as e:
+            print(f"Token validation failed: {type(e).__name__}: {str(e)}")
             return False
 
     def verify_token_data(self, token_data: dict) -> None:
@@ -90,4 +96,4 @@ class RoleChecker:
     ):
         if current_user.role not in self.allowed_roles:
             raise InsufficientPermission()
-        return True 
+        return True

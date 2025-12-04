@@ -7,8 +7,8 @@ import time
 import logging
 
 
-logger = logging.getLogger("uvicorn.access")
-logger.disabled = True
+# logger = logging.getLogger("uvicorn.access")
+# logger.disabled = True
 
 
 def register_middleware(app: FastAPI):

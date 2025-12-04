@@ -2,6 +2,8 @@
 import redis.asyncio as redis
 from src.config import settings
 from typing import Optional
+from datetime import datetime, timezone
+import json
 
 JTI_EXPIRY = 3600  # 1 hour in seconds
 
@@ -30,11 +32,31 @@ class RedisClient:
         if self.client:
             await self.client.aclose()
 
-    async def add_jti_to_BlockList(self, jti: str, ttl: int = None) -> None:
+    async def ping(self) -> bool:
+        """Check if Redis connection is alive"""
+        try:
+            if not self.client:
+                await self.connect()
+            return await self.client.ping()
+        except Exception:
+            return False
+
+    async def add_jti_to_BlockList(
+        self, jti: str, user_id: str = None, ttl: int = None
+    ) -> None:
+        """Store token metadata for auditing"""
         if not self.client:
             await self.connect()
+
+        token_data = {
+            "blocked_at": datetime.now(timezone.utc).isoformat(),
+            "user_id": user_id,
+            "reason": "logout",
+        }
         await self.client.setex(
-            name=jti, time=ttl or JTI_EXPIRY, value="1"  # Use meaningful value
+            name=jti,
+            time=ttl or JTI_EXPIRY,
+            value=json.dumps(token_data),
         )
 
     async def token_in_BlockList(self, jti: str) -> bool:
@@ -52,15 +74,6 @@ class RedisClient:
 
 # Singleton instance
 redis_client = RedisClient()
-
-#!!!!!!!!!!!!!!7. Important Security Fix
-# Legacy functions for backward compatibility
-async def add_jti_to_BlockList(jti: str, ttl: int = None) -> None:
-    await redis_client.add_jti_to_BlockList(jti, ttl)
-
-
-async def token_in_BlockList(jti: str) -> bool:
-    return await redis_client.token_in_BlockList(jti)
 
 
 async def get_redis() -> RedisClient:

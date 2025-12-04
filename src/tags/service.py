@@ -28,8 +28,6 @@ class TagService:
     ):
         """Add tags to a book"""
         book = await book_service.get_book(book_uid=book_uid, session=session)
-        if not book:
-            raise BookNotFound()
         for tag_item in tag_data.tags:
             result = await session.exec(select(Tag).where(Tag.name == tag_item.name))
             tag = result.one_or_none()
@@ -65,11 +63,13 @@ class TagService:
     ):
         """Update a tag"""
         tag = await self.get_tag_by_uid(tag_uid, session)
+        if not tag:
+            raise TagNotFound()
         update_data_dict = tag_update_data.model_dump()
         for k, v in update_data_dict.items():
             setattr(tag, k, v)
-            await session.commit()
-            await session.refresh(tag)
+        await session.commit()
+        await session.refresh(tag)
         return tag
 
     async def delete_tag(self, tag_uid: UUID, session: AsyncSession):
@@ -79,3 +79,6 @@ class TagService:
             raise TagNotFound()
         await session.delete(tag)
         await session.commit()
+        return tag
+
+

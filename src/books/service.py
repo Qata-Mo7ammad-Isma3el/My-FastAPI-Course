@@ -64,7 +64,6 @@ class BookService:
         session: AsyncSession,
     ) -> Book:
         book_to_update = await self.get_book(book_uid, session=session)
-
         if book_to_update is not None:
             #! Use exclude_unset=True to only update provided fields
             book_update_dict = update_data.model_dump(exclude_unset=True)

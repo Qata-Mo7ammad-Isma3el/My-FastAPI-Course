@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Request
 from fastapi.responses import JSONResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 from typing import Annotated
@@ -6,7 +6,7 @@ from src.auth.schemas import UserCreateModel, UserModel, UserLoginModel, UserBoo
 from src.auth.service import UserService
 from src.db.main import get_session
 from src.auth.utils import create_access_token, decode_token, verify_password
-from datetime import timedelta
+from datetime import timedelta, timezone
 from src.config import settings
 from src.auth.dependencies import (
     RefreshTokenBearer,
@@ -14,14 +14,12 @@ from src.auth.dependencies import (
     get_current_user,
     RoleChecker,
 )
-from src.db.redis import add_jti_to_BlockList
+from src.db.redis import RedisClient, get_redis
 from datetime import datetime
 from src.errors import UserAlreadyExists, UserNotFound, InvalidCredentials, InvalidToken
 
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
-
-
 
 
 limiter = Limiter(key_func=get_remote_address)
@@ -46,9 +44,11 @@ async def create_user_account(
 
 
 @auth_router.post("/login")
-@limiter.limit("5/minute") ## ch8 QATA 
+@limiter.limit("5/minute")  ## ch8 QATA
 async def login_user(
-    login_data: UserLoginModel, session: Annotated[AsyncSession, Depends(get_session)]
+    request: Request,
+    login_data: UserLoginModel,
+    session: Annotated[AsyncSession, Depends(get_session)],
 ):
 
     email = login_data.email
@@ -68,9 +68,9 @@ async def login_user(
                 user_data={
                     "uid": str(user.uid),
                     "email": user.email,
-                    "role": user.role, ## ch3QATA
+                    "role": user.role,  ## ch3QATA
                 },
-                expiry=timedelta(days=settings.REFRESH_TOKEN_EXPIRY),
+                expiry=timedelta(seconds=settings.REFRESH_TOKEN_EXPIRY),
                 refresh=True,
             )
             return JSONResponse(
@@ -93,18 +93,34 @@ async def login_user(
 async def get_new_access_token(
     token_details: Annotated[dict, Depends(RefreshTokenBearer())],
 ):
+    print(f"Token details received: {token_details}")
     expiry_timestamp = token_details.get("exp")
-    if datetime.fromtimestamp(expiry_timestamp) > datetime.now():
-        new_access_token = create_access_token(
-            user_data=token_details["user"], ## ch2QATA
-        )
-        return JSONResponse(
-            status_code=status.HTTP_200_OK,
-            content={
-                "access_token": new_access_token,
-                "token_type": "bearer",
-            },
-        )
+
+    if not expiry_timestamp:
+        raise InvalidToken()
+
+    try:
+        # Convert timestamp with UTC timezone
+        expiry_datetime = datetime.fromtimestamp(expiry_timestamp, tz=timezone.utc)
+        current_datetime = datetime.now(timezone.utc)
+
+        print(f"Expiry: {expiry_datetime}, Current: {current_datetime}")
+
+        if expiry_datetime > current_datetime:
+            new_access_token = create_access_token(
+                user_data=token_details["user"],
+            )
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content={
+                    "access_token": new_access_token,
+                    "token_type": "bearer",
+                },
+            )
+    except (ValueError, OSError, KeyError) as e:
+        print(f"Error in refresh_token: {type(e).__name__}: {str(e)}")
+        raise InvalidToken()
+
     raise InvalidToken()
 
 
@@ -112,24 +128,26 @@ async def get_new_access_token(
 async def get_logged_in_user(
     current_user: Annotated[dict, Depends(get_current_user)],
     _: bool = Depends(role_checker),
-):
+) -> UserBooksModel:
     return current_user  # TODO try to add uid in a good looking way
 
 
 @auth_router.post("/logout")
-async def revoke_token(token_details: Annotated[dict, Depends(AccessTokenBearer())]):
+async def revoke_token(
+    token_details: Annotated[dict, Depends(AccessTokenBearer())],
+    redis_client: Annotated[RedisClient, Depends(get_redis)],
+):
     jti = token_details.get("jti")
-    ## ch4QATA
     exp = token_details.get("exp")
-    # Calculate remaining time until expiry 
-    remaining_ttl = exp - int(datetime.now().timestamp())
+    user_id = token_details["user"]["uid"]
+    # Calculate remaining time until expiry
+    remaining_ttl = exp - int(datetime.now(timezone.utc).timestamp())
     if remaining_ttl > 0:
-        await add_jti_to_BlockList(jti)
+        await redis_client.add_jti_to_BlockList(jti, user_id, ttl=remaining_ttl)
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content={"message": "Token has been revoked successfully."},
     )
-
 
 
 ## TODO ch6 QATA
@@ -138,8 +156,10 @@ async def forgot_password(email: str, session: AsyncSession = Depends(get_sessio
     # Generate reset token, send email, etc.
     pass
 
+
 @auth_router.post("/reset-password")
-async def reset_password(token: str, new_password: str, session: AsyncSession = Depends(get_session)):
+async def reset_password(
+    token: str, new_password: str, session: AsyncSession = Depends(get_session)
+):
     # Validate reset token, update password
     pass
-

@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, Field, Relationship, Index
 from uuid import UUID, uuid4
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from typing import Optional, List
 
 
@@ -12,13 +12,16 @@ from typing import Optional, List
 # > both ways are valid and can be used together in the same project
 
 
-class TimestampMixin(SQLModel):
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
+class TimestampMixin:
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None)  
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None)  
+    )
 
     def update_timestamp(self):
-        self.updated_at = datetime.now()
-
+        self.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
 
 class User(SQLModel, TimestampMixin, table=True):
     __tablename__ = "users_table"
@@ -57,7 +60,7 @@ class BookTag(SQLModel, table=True):
     tag_id: UUID = Field(default=None, foreign_key="tags.uid", primary_key=True)
 
 
-class Book(SQLModel,TimestampMixin, table=True):
+class Book(SQLModel, TimestampMixin, table=True):
     __tablename__ = "books"
     __table_args__ = (
         Index("idx_book_title", "title"),
@@ -101,13 +104,13 @@ class Book(SQLModel,TimestampMixin, table=True):
         """Called before inserting into database"""
         self.validate_page_count()
         self.validate_published_date()
-        self.updated_at = datetime.now()
+        self.updated_at = datetime.now(timezone.utc)
 
     def __repr__(self):
         return f"<BOOK {self.title} by {self.author}>"
 
 
-class Review(SQLModel,TimestampMixin, table=True):
+class Review(SQLModel, TimestampMixin, table=True):
     __tablename__ = "reviews"
     __table_args__ = (
         Index("idx_review_user_book", "user_uid", "book_uid"),
@@ -134,13 +137,13 @@ class Review(SQLModel,TimestampMixin, table=True):
 
     def before_insert(self):
         self.validate_rating()
-        self.updated_at = datetime.now()
+        self.updated_at = datetime.now(timezone.utc)
 
     def __repr__(self):
         return f"<REVIEW {self.rating} stars by User {self.user_uid} for Book {self.book_uid}>"
 
 
-class Tag(SQLModel,TimestampMixin, table=True):
+class Tag(SQLModel, TimestampMixin, table=True):
     __tablename__ = "tags"
     __table_args__ = (Index("idx_tag_name", "name", unique=True),)
     uid: UUID = Field(default_factory=uuid4, primary_key=True)

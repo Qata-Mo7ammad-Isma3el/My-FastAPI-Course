@@ -11,13 +11,14 @@ from src.db.main import get_session
 from .schemas import TagAddModel, TagCreateModel, TagModel
 from .service import TagService
 from uuid import UUID
+
 tags_router = APIRouter()
 tag_service = TagService()
 user_role_checker = Depends(RoleChecker(["user", "admin"]))
 
 
 @tags_router.get("/", response_model=List[TagModel], dependencies=[user_role_checker])
-async def get_all_tags(session: AsyncSession = Depends(get_session)):
+async def get_all_tags(session: AsyncSession = Depends(get_session)) -> List[TagModel]:
     tags = await tag_service.get_tags(session)
     return tags
 
@@ -64,11 +65,10 @@ async def update_tag(
 
 @tags_router.delete(
     "/{tag_uid}",
-    status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[user_role_checker],
 )
 async def delete_tag(
     tag_uid: UUID, session: AsyncSession = Depends(get_session)
 ) -> None:
-    updated_tag = await tag_service.delete_tag(tag_uid, session)
-    return updated_tag
+    deleted_tag = await tag_service.delete_tag(tag_uid, session)
+    return deleted_tag

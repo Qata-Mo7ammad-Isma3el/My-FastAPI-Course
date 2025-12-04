@@ -91,12 +91,12 @@ async def update_book(
     user_uid = user_token.get("user")["uid"]
     old_book_data = current_book.model_copy()
     new_updated_book_data = await book_service.update_book(
-        book_uid, user_uid, book_update_data, session
+        book_uid, UUID(user_uid), book_update_data, session
     )
     response_data = {
         "message": "Book Updated Successfully!",
-        "old_book_data": old_book_data,
-        "new_updated_book_data": new_updated_book_data,
+        "old_book": old_book_data,
+        "updated_book": new_updated_book_data,
     }
     return response_data
 
@@ -121,7 +121,7 @@ async def delete_book(
 
 
 #! --- SEARCH BOOKS ---
-@book_router.get("/search/", response_model=List[BookResponse])
+@book_router.post("/search/", response_model=List[BookResponse])
 async def search_books(
     book_data: BookSearchModel,
     session: Annotated[AsyncSession, Depends(get_session)],

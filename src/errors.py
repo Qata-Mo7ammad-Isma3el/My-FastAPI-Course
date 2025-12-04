@@ -77,14 +77,39 @@ class UserNotFound(BooklyException):
     pass
 
 
-class TagAlreadyExists(BooklyException):
-    """Tag already exists"""
+class AccountNotVerified(Exception):
+    """Account not yet verified"""
 
     pass
 
 
-class AccountNotVerified(Exception):
-    """Account not yet verified"""
+# errors.py - Add these missing exceptions
+class ReviewNotFound(BooklyException):
+    """Review not found"""
+
+    pass
+
+
+class ReviewAlreadyExists(BooklyException):
+    """User already reviewed this book"""
+
+    pass
+
+
+class ReviewPermissionDenied(BooklyException):
+    """User doesn't have permission to modify this review"""
+
+    pass
+
+
+class TagInUse(BooklyException):
+    """Tag is associated with books and cannot be deleted"""
+
+    pass
+
+
+class InvalidTagName(BooklyException):
+    """Invalid tag name format"""
 
     pass
 
@@ -239,24 +264,81 @@ def register_all_errors(app: FastAPI):
         ),
     )
 
-    @app.exception_handler(500)
-    async def internal_server_error(request, exc):
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={
-                "message": "An internal server error occurred.",
-                "resolution": "Please try again later or contact support if the issue persists.",
-                "error_code": "internal_server_error",
-            },
-        )
+    # @app.exception_handler(500)
+    # async def internal_server_error(request, exc):
+    #     return JSONResponse(
+    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    #         content={
+    #             "message": "An internal server error occurred.",
+    #             "resolution": "Please try again later or contact support if the issue persists.",
+    #             "error_code": "internal_server_error",
+    #         },
+    #     )
 
-    @app.exception_handler(SQLAlchemyError)
-    async def database__error(request, exc):
-        print(str(exc))
-        return JSONResponse(
-            content={
-                "message": "Oops! Something went wrong",
-                "error_code": "server_error",
+    # @app.exception_handler(SQLAlchemyError)
+    # async def database__error(request, exc):
+    #     print(str(exc))
+    #     return JSONResponse(
+    #         content={
+    #             "message": "Oops! Something went wrong",
+    #             "error_code": "server_error",
+    #         },
+    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    #     )
+
+    app.add_exception_handler(
+        ReviewNotFound,
+        create_exception_handler(
+            status_code=status.HTTP_404_NOT_FOUND,
+            initial_detail={
+                "message": "Review not found",
+                "error_code": "review_not_found",
             },
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+        ),
+    )
+
+    app.add_exception_handler(
+        ReviewAlreadyExists,
+        create_exception_handler(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            initial_detail={
+                "message": "You have already reviewed this book",
+                "error_code": "review_already_exists",
+            },
+        ),
+    )
+
+    app.add_exception_handler(
+        ReviewPermissionDenied,
+        create_exception_handler(
+            status_code=status.HTTP_403_FORBIDDEN,
+            initial_detail={
+                "message": "You don't have permission to modify this review",
+                "error_code": "review_permission_denied",
+            },
+        ),
+    )
+
+    app.add_exception_handler(
+        TagInUse,
+        create_exception_handler(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            initial_detail={
+                "message": "Tag is associated with books and cannot be deleted",
+                "error_code": "tag_in_use",
+                "resolution": "Remove tag from all books first or merge with another tag",
+            },
+        ),
+    )
+
+    app.add_exception_handler(
+        InvalidTagName,
+        create_exception_handler(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            initial_detail={
+                "message": "Invalid tag name format",
+                "error_code": "invalid_tag_name",
+                "resolution": "Tag names can only contain letters, numbers, spaces, hyphens, and underscores",
+            },
+        ),
+    )
