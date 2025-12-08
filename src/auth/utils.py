@@ -3,6 +3,8 @@ from datetime import timedelta, datetime, timezone
 import jwt
 import uuid
 from src.config import settings
+from itsdangerous import URLSafeTimedSerializer
+from typing import Dict
 
 password_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
@@ -50,3 +52,24 @@ def decode_token(token: str) -> dict:
         raise Exception("Token has expired")
     except jwt.InvalidTokenError:
         raise Exception("Invalid token")
+
+
+serializer = URLSafeTimedSerializer(
+    secret_key=settings.JWT_SECRET,
+    salt="email-verification-salt",
+)
+
+
+def create_url_safe_token(data: dict) -> str:
+    token = serializer.dumps(data)
+    return token
+
+
+def decode_url_safe_token(token: str, max_age: int = 3600) -> Dict:
+    """Decode URL safe token with max_age in seconds (default 1 hour)"""
+    try:
+        token_data = serializer.loads(token, max_age=max_age)
+        return token_data
+    except Exception as e:
+        print(f"Token decode error: {type(e).__name__}: {str(e)}")
+        raise Exception(f"Invalid or expired token: {str(e)}")

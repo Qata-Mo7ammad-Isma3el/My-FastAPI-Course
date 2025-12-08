@@ -1,0 +1,187 @@
+<!-- templates/email_verification.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .email-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 30px;
+            text-align: center;
+            color: white;
+        }
+        .email-header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .email-header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .email-body {
+            padding: 40px 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 25px;
+            color: #2d3748;
+        }
+        .instruction {
+            font-size: 16px;
+            color: #4a5568;
+            margin-bottom: 30px;
+        }
+        .verification-button {
+            display: block;
+            width: 200px;
+            margin: 30px auto;
+            padding: 14px 28px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .verification-button:hover {
+            background: #5a67d8;
+            color: #f7fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(102, 126, 234, 0.2);
+        }
+        .verification-link {
+            display: block;
+            margin: 25px 0;
+            padding: 15px;
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            word-break: break-all;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            color: #4a5568;
+        }
+        .expiry-notice {
+            background: #fffaf0;
+            border-left: 4px solid #ed8936;
+            padding: 15px;
+            margin: 25px 0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .security-note {
+            font-size: 14px;
+            color: #718096;
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .email-footer {
+            background: #f7fafc;
+            padding: 25px 30px;
+            text-align: center;
+            color: #718096;
+            font-size: 14px;
+        }
+        .company-name {
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+        .footer-links {
+            margin-top: 15px;
+        }
+        .footer-links a {
+            color: #667eea;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 13px;
+        }
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 600px) {
+            .email-body, .email-header {
+                padding: 25px 20px;
+            }
+            .verification-button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <h1>Verify Your Email Address</h1>
+            <p>Welcome to {{ project_name }}</p>
+        </div>
+        
+        <div class="email-body">
+            <div class="greeting">
+                Hello {{ user_name }},
+            </div>
+            
+            <div class="instruction">
+                Thank you for signing up! To complete your registration and activate your account, please verify your email address by clicking the button below:
+            </div>
+            
+            <a href="{{ verification_link }}" class="verification-button">
+                Verify Email Address
+            </a>
+            
+            <div class="expiry-notice">
+                ⚠️ <strong>Important:</strong> This verification link will expire in 24 hours for security reasons.
+            </div>
+            
+            <div class="instruction">
+                If the button above doesn't work, you can copy and paste the following link into your browser:
+            </div>
+            
+            <div class="verification-link">
+                {{ verification_link }}
+            </div>
+            
+            <div class="security-note">
+                <strong>Security Notice:</strong> If you didn't create an account with {{ project_name }}, please disregard this email. Your account will not be activated.
+            </div>
+        </div>
+        
+        <div class="email-footer">
+            <div class="company-name">{{ project_name }}</div>
+            <div>Book Management & Review Platform</div>
+            <div class="footer-links">
+                <a href="{{ domain }}/privacy">Privacy Policy</a> • 
+                <a href="{{ domain }}/terms">Terms of Service</a> • 
+                <a href="{{ domain }}/help">Help Center</a>
+            </div>
+            <div style="margin-top: 15px; font-size: 12px;">
+                © {{ current_year }} {{ project_name }}. All rights reserved.<br>
+                This is an automated message, please do not reply to this email.
+            </div>
+        </div>
+    </div>
+</body>
+</html>

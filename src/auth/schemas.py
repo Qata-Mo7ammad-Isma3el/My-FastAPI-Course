@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 # --- 1. User Create Model ---
 class UserCreateModel(BaseModel):
     ## ch7 QATA
-    username: str = Field(..., min_length=3, max_length=50, pattern="^[a-zA-Z0-9_]+$")
+    username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr = Field(..., max_length=40)
     password: str = Field(..., min_length=8, max_length=100)
     first_name: str = Field(..., min_length=1, max_length=50)
@@ -53,6 +53,14 @@ class UserBooksModel(UserModel):
 class UserLoginModel(BaseModel):
     email: EmailStr = Field(..., max_length=40, description="User's email address")
     password: str = Field(..., min_length=6, max_length=100)
+
+# -- 4. Email Model ---
+class EmailModel(BaseModel):
+    addresses: List[EmailStr] = Field(..., description="List of recipient email addresses")
+    # subject: str = Field(..., max_length=150, description="Subject of the email")
+    # body: str = Field(..., description="Body content of the email")
+
+
 
 
 # Rebuild models with forward references
