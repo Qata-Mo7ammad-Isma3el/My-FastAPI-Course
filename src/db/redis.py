@@ -7,7 +7,6 @@ import json
 
 JTI_EXPIRY = 3600  # 1 hour in seconds
 
-
 class RedisClient:
     def __init__(self):
         self.client: Optional[redis.Redis] = None

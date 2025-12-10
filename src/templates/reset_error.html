@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Reset Error</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 50px 40px;
+            text-align: center;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .error-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 30px;
+            animation: scaleIn 0.5s ease-out 0.2s both;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .error-icon svg {
+            width: 50px;
+            height: 50px;
+            stroke: white;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+
+        h1 {
+            color: #2d3748;
+            font-size: 32px;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #718096;
+            font-size: 16px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .error-message {
+            background: #fff5f5;
+            border-left: 4px solid #f5576c;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .error-message p {
+            color: #c53030;
+            line-height: 1.6;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(245, 87, 108, 0.3);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .help-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        .help-section h3 {
+            color: #2d3748;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .help-section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .help-section li {
+            color: #4a5568;
+            padding: 6px 0;
+            font-size: 14px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .help-section li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #f5576c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="error-icon">
+            <svg viewBox="0 0 52 52">
+                <circle cx="26" cy="26" r="25" fill="none"/>
+                <line x1="16" y1="16" x2="36" y2="36"/>
+                <line x1="36" y1="16" x2="16" y2="36"/>
+            </svg>
+        </div>
+
+        <h1>Password Reset Failed</h1>
+        <p class="subtitle">We couldn't reset your password at this time.</p>
+
+        <div class="error-message">
+            <p><strong>Error:</strong> {{ error_message }}</p>
+        </div>
+
+        <div class="actions">
+            <a href="http://{{ domain }}/api/v1/auth/reset-password-request" class="btn btn-primary">
+                Request New Reset Link
+            </a>
+            <a href="http://{{ domain }}/login" class="btn btn-secondary">
+                Back to Login
+            </a>
+        </div>
+
+        <div class="help-section">
+            <h3>Common Issues:</h3>
+            <ul>
+                <li>The reset link may have expired (valid for 24 hours)</li>
+                <li>The link may have already been used</li>
+                <li>You may have copied the link incorrectly</li>
+                <li>Try requesting a new password reset link</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

@@ -10,6 +10,8 @@ from src.auth.schemas import (
     UserLoginModel,
     UserBooksModel,
     EmailModel,
+    PasswordResetRequestModel,
+    PasswordResetConfirmModel,
 )
 from src.auth.service import UserService
 from src.db.main import get_session
@@ -19,6 +21,7 @@ from src.auth.utils import (
     verify_password,
     create_url_safe_token,
     decode_url_safe_token,
+    generate_password_hash,
 )
 from datetime import timedelta, timezone
 from src.config import settings
@@ -202,7 +205,7 @@ async def verify_email(
 
 
 @auth_router.post("/login")
-@limiter.limit("5/minute")  ## ch8 QATA
+@limiter.limit("5/minute")
 async def login_user(
     request: Request,
     login_data: UserLoginModel,
@@ -226,7 +229,7 @@ async def login_user(
                 user_data={
                     "uid": str(user.uid),
                     "email": user.email,
-                    "role": user.role,  ## ch3QATA
+                    "role": user.role,
                 },
                 expiry=timedelta(seconds=settings.REFRESH_TOKEN_EXPIRY),
                 refresh=True,
@@ -308,16 +311,170 @@ async def revoke_token(
     )
 
 
-## TODO ch6 QATA
-@auth_router.post("/forgot-password")
-async def forgot_password(email: str, session: AsyncSession = Depends(get_session)):
-    # Generate reset token, send email, etc.
-    pass
-
-
-@auth_router.post("/reset-password")
-async def reset_password(
-    token: str, new_password: str, session: AsyncSession = Depends(get_session)
+@auth_router.post("/reset-password-request")
+async def reset_password_request(
+    email_data: PasswordResetRequestModel,
+    session: Annotated[AsyncSession, Depends(get_session)],
 ):
-    # Validate reset token, update password
-    pass
+    email = email_data.email
+
+    # Check if user exists
+    user = await user_service.get_user_by_email(email, session)
+    if not user:
+        # Return success message anyway for security (don't reveal if user exists)
+        print(f"Password reset requested for non-existent email: {email}")
+        return {
+            "message": "If an account with that email exists, a password reset link has been sent.",
+        }
+
+    try:
+        # Create reset token
+        token = create_url_safe_token({"email": email})
+
+        # Get user's full name
+        user_full_name = f"{user.first_name} {user.last_name}"
+
+        # Send password reset email
+        email_sent = await email_service.send_password_reset_email(
+            user_email=email, user_name=user_full_name, token=token
+        )
+
+        if not email_sent:
+            print(f"Failed to send password reset email to: {email}")
+            # Still return success message for security, but log the failure
+
+    except Exception as e:
+        # Log the error but still return a success message for security
+        print(
+            f"Error in password reset request for {email}: {type(e).__name__}: {str(e)}"
+        )
+
+    # Always return the same message for security (timing attack prevention)
+    return {
+        "message": "If an account with that email exists, a password reset link has been sent.",
+    }
+
+
+@auth_router.get("/reset-password/{token}", response_class=HTMLResponse)
+async def reset_password_form(
+    token: str, request: Request, session: Annotated[AsyncSession, Depends(get_session)]
+):
+    """Display password reset form when user clicks email link."""
+    print(f"===== PASSWORD RESET FORM REQUEST =====")
+    print(f"Token received: {token[:50]}...")
+
+    try:
+        # Validate token (24 hours max age)
+        data = decode_url_safe_token(token, max_age=86400)
+        print(f"Token decoded successfully. Data: {data}")
+        email = data.get("email")
+
+        if not email:
+            print("Token decoded but no email found in token data")
+            return templates.TemplateResponse(
+                "reset_error.html",
+                {
+                    "request": request,
+                    "error_message": "Invalid reset token.",
+                    "domain": settings.DOMAIN,
+                },
+                status_code=400,
+            )
+
+        # Check if user exists
+        user = await user_service.get_user_by_email(email, session)
+        if not user:
+            return templates.TemplateResponse(
+                "reset_error.html",
+                {
+                    "request": request,
+                    "error_message": "User not found.",
+                    "domain": settings.DOMAIN,
+                },
+                status_code=404,
+            )
+
+        # Display password reset form
+        return templates.TemplateResponse(
+            "reset_password_form.html",
+            {
+                "request": request,
+                "token": token,
+                "domain": settings.DOMAIN,
+            },
+        )
+
+    except Exception as e:
+        print(
+            f"Password reset form failed - Error type: {type(e).__name__}, Message: {str(e)}"
+        )
+        return templates.TemplateResponse(
+            "reset_error.html",
+            {
+                "request": request,
+                "error_message": "Token is invalid or expired. Please request a new password reset.",
+                "domain": settings.DOMAIN,
+            },
+            status_code=401,
+        )
+
+
+@auth_router.post("/reset-password/{token}")
+async def reset_password(
+    token: str,
+    password_data: PasswordResetConfirmModel,
+    session: Annotated[AsyncSession, Depends(get_session)],
+):
+    """Handle password reset form submission."""
+    print(f"===== PASSWORD RESET SUBMISSION =====")
+    print(f"Token received: {token[:50]}...")
+
+    try:
+        # Decode and validate token
+        data = decode_url_safe_token(token, max_age=86400)
+        print(f"Token decoded successfully. Data: {data}")
+        email = data.get("email")
+
+        if not email:
+            raise InvalidToken()
+
+        # Get user
+        user = await user_service.get_user_by_email(email, session)
+        if not user:
+            raise UserNotFound()
+
+        user.password_hash = generate_password_hash(password_data.new_password)
+        user.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        await user_service.update_user(user, session)
+
+        print(f"Password updated successfully for user: {email}")
+
+        # Return success response with redirect URL
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={
+                "message": "Password reset successful",
+                "redirect_url": f"http://{settings.DOMAIN}/api/v1/auth/reset-success",
+            },
+        )
+
+    except Exception as e:
+        print(
+            f"Password reset failed - Error type: {type(e).__name__}, Message: {str(e)}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token is invalid or expired. Please request a new password reset.",
+        )
+
+
+@auth_router.get("/reset-success", response_class=HTMLResponse)
+async def reset_success(request: Request):
+    """Display password reset success page."""
+    return templates.TemplateResponse(
+        "reset_success.html",
+        {
+            "request": request,
+            "domain": settings.DOMAIN,
+        },
+    )

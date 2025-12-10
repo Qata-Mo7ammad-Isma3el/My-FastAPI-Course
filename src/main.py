@@ -41,79 +41,72 @@ openapi_tags = [
 ]
 
 description = """
-    # Book Management API
-    
-    ## Features
-    - 🔐 **JWT-based authentication** with token refresh
-    - 📚 **Book management** (Create, Read, Update, Delete)
-    - ⭐ **Book reviews and ratings** system
-    - 🏷️ **Tag system** for organizing books
-    - 👥 **User roles** (admin/user) with role-based access control
-    - 🔄 **Refresh token rotation** for enhanced security
-    - 🚫 **Token revocation** (logout) functionality
-    
-    ## Authentication Flow
-    
-    Most endpoints require authentication using Bearer tokens.
-    
-    1. **Register**: `POST /api/v1/auth/signup`
-    2. **Login**: `POST /api/v1/auth/login` - Get access and refresh tokens
-    3. **Use Access Token**: Include in Authorization header: `Bearer <access_token>`
-    4. **Refresh Token**: `GET /api/v1/auth/refresh_token` when access token expires
-    5. **Logout**: `POST /api/v1/auth/logout` to revoke tokens
-    6. **Get Profile**: `GET /api/v1/auth/me` to get current user info
-    
-    ## API Endpoints
-    
-    ### Authentication (`/api/v1/auth`)
-    - `POST /signup` - Register new user
-    - `POST /login` - Login and get tokens
-    - `GET /refresh_token` - Refresh access token
-    - `POST /logout` - Revoke token
-    - `GET /me` - Get current user profile
-    
-    ### Books (`/api/v1/books`)
-    - `GET /` - Get all books
-    - `GET /{book_uid}` - Get specific book with reviews and tags
-    - `GET /user/{user_uid}` - Get user's books
-    - `POST /` - Create new book
-    - `PATCH /{book_uid}` - Update book
-    - `DELETE /{book_uid}` - Delete book
-    
-    ### Reviews (`/api/v1/reviews`)
-    - `GET /` - Get all reviews
-    - `GET /{review_uid}` - Get specific review
-    - `POST /book/{book_uid}` - Add review to book
-    - `PATCH /{review_uid}` - Update review
-    - `DELETE /{review_uid}` - Delete review
-    
-    ### Tags (`/api/v1/tags`)
-    - `GET /` - Get all tags
-    - `POST /` - Create new tag
-    - `POST /book/{book_uid}/tags` - Add tags to book
-    - `PUT /{tag_uid}` - Update tag
-    - `DELETE /{tag_uid}` - Delete tag
-    
-    ## Error Responses
-    
-    All errors follow this format:
-    ```json
-    {
-      "detail": {
-        "message": "Error description",
-        "error_code": "specific_error_code",
-        "resolution": "How to fix it"
-      }
-    }
-    ```
-    
-    ## Getting Started
-    
-    1. Register a new user account
-    2. Login to get your tokens
-    3. Use the access token for authenticated requests
-    4. Refresh token when it expires (1 hour by default)
-    5. Logout when done to revoke tokens
+Book Management API
+
+**Features**
+
+- **JWT-based authentication** with token refresh
+- **Book management** (Create, Read, Update, Delete)
+- **Book reviews and ratings** system
+- **Tag system** for organizing books
+- **User roles** (admin/user) with role-based access control
+- **Refresh token rotation** for enhanced security
+- **Token revocation** (logout) functionality
+
+**Authentication Flow**
+
+Most endpoints require authentication using Bearer tokens.
+
+1. **Register**: `POST /api/v1/auth/signup`
+2. **Login**: `POST /api/v1/auth/login` - Get access and refresh tokens
+3. **Use Access Token**: Include in Authorization header: `Bearer <access_token>`
+4. **Refresh Token**: `GET /api/v1/auth/refresh_token` when access token expires
+5. **Logout**: `POST /api/v1/auth/logout` to revoke tokens
+6. **Get Profile**: `GET /api/v1/auth/me` to get current user info
+
+**API Endpoints**
+
+**Authentication** (`/api/v1/auth`)
+- `POST /signup` - Register new user
+- `POST /login` - Login and get tokens
+- `GET /refresh_token` - Refresh access token
+- `POST /logout` - Revoke token
+- `GET /me` - Get current user profile
+
+**Books** (`/api/v1/books`)
+- `GET /` - Get all books
+- `GET /{book_uid}` - Get specific book with reviews and tags
+- `GET /user/{user_uid}` - Get user's books
+- `POST /` - Create new book
+- `PATCH /{book_uid}` - Update book
+- `DELETE /{book_uid}` - Delete book
+
+**Reviews** (`/api/v1/reviews`)
+- `GET /` - Get all reviews
+- `GET /{review_uid}` - Get specific review
+- `POST /book/{book_uid}` - Add review to book
+- `PATCH /{review_uid}` - Update review
+- `DELETE /{review_uid}` - Delete review
+
+**Tags** (`/api/v1/tags`)
+- `GET /` - Get all tags
+- `POST /` - Create new tag
+- `POST /book/{book_uid}/tags` - Add tags to book
+- `PUT /{tag_uid}` - Update tag
+- `DELETE /{tag_uid}` - Delete tag
+
+**Error Responses**
+
+All errors follow this format:
+
+```json
+{
+  "detail": {
+    "message": "Error description",
+    "error_code": "specific_error_code",
+    "resolution": "How to fix it"
+  }
+}
     """
 
 
@@ -160,7 +153,7 @@ version = "v1"
 app = FastAPI(
     version=__version__,  # Use package version
     title=settings.PROJECT_NAME,
-    # description=description,
+    description=description,
     lifespan=lifespan,
     openapi_url=(
         f"{settings.API_PREFIX}/openapi.json" if not settings.DEBUG else "/openapi.json"
@@ -168,8 +161,8 @@ app = FastAPI(
     docs_url="/docs" if settings.DEBUG else None,
     redoc_url="/redoc" if settings.DEBUG else None,
     contact={
-        "name": "API Support",
-        "email": "support@example.com",
+        "name": "Mohammad Ismail API's Developer",
+        "email": "imoh40398@gmail.com",
     },
     license_info={
         "name": "MIT",

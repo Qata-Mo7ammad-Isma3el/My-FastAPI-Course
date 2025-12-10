@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Reset Successful</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 50px 40px;
+            text-align: center;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 30px;
+            animation: scaleIn 0.5s ease-out 0.2s both;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .success-icon svg {
+            width: 50px;
+            height: 50px;
+            stroke: white;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+
+        .checkmark {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: drawCheck 0.5s ease-out 0.5s forwards;
+        }
+
+        @keyframes drawCheck {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        h1 {
+            color: #2d3748;
+            font-size: 32px;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #718096;
+            font-size: 16px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #f0f4ff 0%, #f3e7ff 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .info-box p {
+            color: #4a5568;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+
+        .info-box strong {
+            color: #2d3748;
+        }
+
+        .login-btn {
+            display: inline-block;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .security-note {
+            margin-top: 30px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #718096;
+        }
+
+        .redirect-info {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #a0aec0;
+        }
+
+        .countdown {
+            color: #667eea;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">
+            <svg viewBox="0 0 52 52">
+                <circle class="checkmark" cx="26" cy="26" r="25" fill="none"/>
+                <path class="checkmark" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+        </div>
+
+        <h1>Password Reset Successful! 🎉</h1>
+        <p class="subtitle">Your password has been changed successfully.</p>
+
+        <div class="info-box">
+            <p><strong>What's next?</strong></p>
+            <p>You can now log in to your account using your new password. For security reasons, you may need to log in again on all your devices.</p>
+        </div>
+
+        <a href="http://{{ domain }}/login" class="login-btn">
+            Go to Login
+        </a>
+
+        <div class="security-note">
+            <strong>🔒 Security Tip:</strong> Never share your password with anyone. If you didn't request this password reset, please contact support immediately.
+        </div>
+    </div>
+</body>
+</html>

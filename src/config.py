@@ -1,12 +1,12 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from celery import Celery
 
 # > this Setting class will help the application to read the env variables from .env file
 # > every and each env variable that we want to read from .env file should be defined here as attribute
 # config.py
 from pydantic import Field, field_validator
 import re
-
+import os
 
 class Settings(BaseSettings):
     # Database
@@ -87,5 +87,26 @@ class Settings(BaseSettings):
             raise ValueError("JWT_SECRET must be at least 16 characters long")
         return v
 
-
 settings = Settings()
+broker_url = f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}"
+result_backend = f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}"
+
+
+
+# Initialize Celery app in config.py
+c_app = Celery(
+    "myproject",
+    broker_url=broker_url,
+    result_backend=result_backend,
+)
+
+# Configure Celery
+c_app.conf.update(
+    task_serializer="json",
+    accept_content=["json"],
+    result_serializer="json",
+    timezone="UTC",
+    enable_utc=True,
+    task_track_started=True,
+    task_time_limit=30 * 60,  # 30 minutes
+)

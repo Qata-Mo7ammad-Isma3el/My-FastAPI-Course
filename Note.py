@@ -1,4 +1,7 @@
-
+#uvx pycowsay 'FastAPI'
+#> celery -A src.celery_tasks.c_app worker --loglevel=info --pool=solo
+#> celery -A src.celery_tasks.c_app flower --port=5555 --address=127.0.0.1
+#> http://127.0.0.1:5555/
 #? model_dump() and model_validate()
 
 #! model_dump() is used to convert  pydantic object -> normal python Dict

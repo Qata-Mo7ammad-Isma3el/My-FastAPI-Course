@@ -13,6 +13,7 @@ from src.errors import (
     RefreshTokenRequired,
     AccessTokenRequired,
     InsufficientPermission,
+    AccountNotVerified
 )
 
 user_service = UserService()
@@ -41,7 +42,6 @@ class TokenBearer(HTTPBearer):
         self.verify_token_data(token_data)
         return token_data
 
-    ## ch1QATA
     def token_valid(self, token: str) -> bool:
         try:
             decode_token(token)
@@ -94,6 +94,9 @@ class RoleChecker:
         self,
         current_user: Annotated[User, Depends(get_current_user)],
     ):
+        if not current_user.is_verified:
+            raise AccountNotVerified()
+        
         if current_user.role not in self.allowed_roles:
             raise InsufficientPermission()
         return True

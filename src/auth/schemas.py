@@ -10,7 +10,6 @@ if TYPE_CHECKING:
 
 # --- 1. User Create Model ---
 class UserCreateModel(BaseModel):
-    ## ch7 QATA
     username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr = Field(..., max_length=40)
     password: str = Field(..., min_length=8, max_length=100)
@@ -36,7 +35,6 @@ class UserModel(BaseModel):
     first_name: str = Field(...)
     last_name: str = Field(...)
     is_verified: bool = Field(...)
-    ## ch5QATA
     # // password_hash: str = Field(exclude=True)
     role: str = Field(...)  # Add role field
     created_at: datetime = Field(...)
@@ -54,13 +52,35 @@ class UserLoginModel(BaseModel):
     email: EmailStr = Field(..., max_length=40, description="User's email address")
     password: str = Field(..., min_length=6, max_length=100)
 
+
 # -- 4. Email Model ---
 class EmailModel(BaseModel):
-    addresses: List[EmailStr] = Field(..., description="List of recipient email addresses")
+    addresses: List[EmailStr] = Field(
+        ..., description="List of recipient email addresses"
+    )
     # subject: str = Field(..., max_length=150, description="Subject of the email")
     # body: str = Field(..., description="Body content of the email")
 
 
+# -- 5. Password Reset Model ---
+class PasswordResetRequestModel(BaseModel):
+    email: EmailStr = Field(..., max_length=40, description="User's email address")
+
+
+class PasswordResetConfirmModel(BaseModel):
+    new_password: str = Field(
+        ..., min_length=8, max_length=100, description="New password"
+    )
+
+    @field_validator("new_password")
+    def validate_password_strength(cls, v):
+        if not any(c.islower() for c in v):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not any(c.isupper() for c in v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not any(c.isdigit() for c in v):
+            raise ValueError("Password must contain at least one digit")
+        return v
 
 
 # Rebuild models with forward references
