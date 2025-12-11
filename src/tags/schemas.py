@@ -4,7 +4,7 @@ from typing import List, Optional, TYPE_CHECKING
 from pydantic import BaseModel
 from pydantic import field_validator, Field
 import re
-
+from pydantic import ConfigDict
 if TYPE_CHECKING:
     from src.books.schemas import BookResponse, Book
 
@@ -55,8 +55,7 @@ class TagResponseModel(BaseModel):
     created_at: datetime
     book_count: int = 0  # Number of books with this tag
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TagWithBooksModel(TagResponseModel):

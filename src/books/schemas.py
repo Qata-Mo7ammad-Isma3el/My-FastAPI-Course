@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List, TYPE_CHECKING
 from uuid import UUID
 from datetime import datetime, date
-
+from pydantic import ConfigDict
 if TYPE_CHECKING:
     from src.reviews.schemas import ReviewModel
     from src.tags.schemas import TagModel
@@ -74,9 +74,7 @@ class BookResponse(BaseModel):
     language: str
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        from_attributes = True  # works with SQLModel objects
+    model_config = ConfigDict(from_attributes=True)  # works with SQLModel objects
 
 
 class BookUpdateResponseModel(BaseModel):
